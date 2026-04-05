@@ -1,3 +1,7 @@
+# Деплой веб-клиента (react-native-web) на GitHub Pages.
+# После пуша в main: Settings → Pages → Source: GitHub Actions.
+# Сайт: https://<user>.github.io/<repo>/ — API идёт на Railway (CORS в app/main.py).
+
 name: Deploy Web to GitHub Pages
 
 on:
@@ -10,7 +14,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:
@@ -35,7 +39,15 @@ jobs:
 
       - name: Build Web App
         working-directory: front
+        env:
+          # Подпапка GitHub Pages для репозитория (имя репо = сегмент URL)
+          PUBLIC_PATH: /${{ github.event.repository.name }}/
+          NODE_ENV: production
         run: yarn web:build
+
+      - name: Jekyll off + SPA
+        run: |
+          touch front/dist/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

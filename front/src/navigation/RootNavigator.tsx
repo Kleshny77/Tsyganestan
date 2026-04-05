@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import {
   createBottomTabNavigator,
   type BottomTabNavigationOptions,
@@ -32,11 +32,17 @@ import type {
   ToursStackParamList,
 } from './types';
 
-const RootStack = createNativeStackNavigator<RootStackParamList>();
+/** JS Stack — работает в web; native stack на web даёт пустой экран. */
+const stackOptions = {
+  headerShown: false,
+  cardStyle: { backgroundColor: colors.background },
+};
+
+const RootStack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const FlightsStack = createNativeStackNavigator<FlightsStackParamList>();
-const ToursStack = createNativeStackNavigator<ToursStackParamList>();
-const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+const FlightsStack = createStackNavigator<FlightsStackParamList>();
+const ToursStack = createStackNavigator<ToursStackParamList>();
+const ProfileStack = createStackNavigator<ProfileStackParamList>();
 
 const navTheme = {
   ...DefaultTheme,
@@ -52,7 +58,7 @@ const navTheme = {
 
 function FlightsNavigator() {
   return (
-    <FlightsStack.Navigator screenOptions={{ headerShown: false }}>
+    <FlightsStack.Navigator screenOptions={stackOptions}>
       <FlightsStack.Screen name="FlightsHome" component={FlightsScreen} />
       <FlightsStack.Screen name="GyroBooking" component={GyroBookingScreen} />
       <FlightsStack.Screen name="Gift" component={GiftScreen} />
@@ -63,7 +69,7 @@ function FlightsNavigator() {
 
 function ToursNavigator() {
   return (
-    <ToursStack.Navigator screenOptions={{ headerShown: false }}>
+    <ToursStack.Navigator screenOptions={stackOptions}>
       <ToursStack.Screen name="ToursHome" component={ToursScreen} />
       <ToursStack.Screen name="GyroBooking" component={GyroBookingScreen} />
       <ToursStack.Screen name="Gift" component={GiftScreen} />
@@ -74,7 +80,7 @@ function ToursNavigator() {
 
 function ProfileNavigator() {
   return (
-    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+    <ProfileStack.Navigator screenOptions={stackOptions}>
       <ProfileStack.Screen name="ProfileHome" component={ProfileScreen} />
       <ProfileStack.Screen name="Achievements" component={AchievementsScreen} />
       <ProfileStack.Screen name="TouchGrass" component={TouchGrassScreen} />
@@ -148,7 +154,7 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer theme={navTheme} key={isLoggedIn ? 'in' : 'out'}>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Navigator screenOptions={stackOptions}>
         {!isLoggedIn ? (
           <>
             <RootStack.Screen name="Welcome" component={WelcomeScreen} />

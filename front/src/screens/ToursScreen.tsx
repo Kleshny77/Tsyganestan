@@ -27,8 +27,14 @@ function matchesSearch(t: Tour, q: string) {
 
 export function ToursScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { accountType, user, tours, getAllowedSearchLetters, isTourUnlocked } =
-    useApp();
+  const {
+    accountType,
+    user,
+    apiUserId,
+    tours,
+    getAllowedSearchLetters,
+    isTourUnlocked,
+  } = useApp();
   const [q, setQ] = useState('');
   const [bizTab, setBizTab] = useState<'all' | 'mine'>('all');
 
@@ -48,12 +54,15 @@ export function ToursScreen({ navigation }: Props) {
   const list = useMemo(() => {
     let base = tours.filter(x => matchesSearch(x, q));
     if (accountType === 'business' && bizTab === 'mine') {
-      base = base.filter(
-        x => x.ownerCompanyId && x.ownerCompanyId === ownerKey,
-      );
+      base = base.filter(t => {
+        if (apiUserId != null && t.createdBy != null) {
+          return t.createdBy === apiUserId;
+        }
+        return !!(t.ownerCompanyId && t.ownerCompanyId === ownerKey);
+      });
     }
     return base;
-  }, [accountType, bizTab, ownerKey, q, tours]);
+  }, [accountType, apiUserId, bizTab, ownerKey, q, tours]);
 
   const hintLetters =
     accountType === 'business'
@@ -85,7 +94,7 @@ export function ToursScreen({ navigation }: Props) {
         <TextInput
           value={q}
           onChangeText={onChangeQuery}
-          placeholder="Поиск..."
+          placeholder="Поиск туров..."
           placeholderTextColor={colors.textMuted}
           style={styles.search}
         />

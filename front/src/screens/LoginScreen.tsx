@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { ApiError } from '../api/client';
 import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
-import type { AccountType } from '../types';
 import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 
@@ -15,59 +22,64 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 export function LoginScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { login } = useApp();
-  const [email, setEmail] = useState('samsonovartem00@gmail.com');
-  const [password, setPassword] = useState('password');
-  const [type, setType] = useState<AccountType>('user');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const onSubmit = () => {
-    const name = email.split('@')[0] || 'Путешественник';
-    login(
-      email,
-      password,
-      {
-        name,
-        email,
-        companyName: type === 'business' ? `${name} Tours` : undefined,
-      },
-      type,
-    );
+  const onSubmit = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Проверьте данные', 'Введите email и пароль.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await login(email.trim(), password);
+    } catch (e) {
+      const msg =
+        e instanceof ApiError ? e.message : 'Не удалось войти. Проверьте сеть.';
+      Alert.alert('Ошибка входа', String(msg));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 12 }]}>
       <BackRow onPress={() => navigation.goBack()} />
       <Text style={styles.title}>Вход</Text>
-      <Text style={styles.sub}>Войти в свой аккаунт</Text>
+      <Text style={styles.sub}>Войдите в свой аккаунт</Text>
 
       <LabeledField
         label="Email"
+        icon="✉️"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
+        placeholder="your@email.com"
       />
       <LabeledField
         label="Пароль"
+        icon="🔑"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        placeholder="••••••••"
       />
 
-      <Text style={styles.typeLabel}>Тип входа (пока без бэка)</Text>
-      <View style={styles.segment}>
-        <Segment
-          label="Пользователь"
-          active={type === 'user'}
-          onPress={() => setType('user')}
-        />
-        <Segment
-          label="Бизнес"
-          active={type === 'business'}
-          onPress={() => setType('business')}
-        />
-      </View>
+      <Text style={styles.hint}>
+        Логин на сервере совпадает с email при регистрации.
+      </Text>
 
-      <PrimaryButton title="Войти" onPress={onSubmit} style={styles.btn} />
+      <PrimaryButton
+        title={busy ? 'Входим…' : 'Войти'}
+        onPress={onSubmit}
+        disabled={busy}
+        style={styles.btn}
+      />
+      {busy ? (
+        <ActivityIndicator style={styles.spinner} color={colors.primary} />
+      ) : null}
 
       <Pressable
         onPress={() => navigation.navigate('SignupAccountType')}
@@ -81,44 +93,6 @@ export function LoginScreen({ navigation }: Props) {
   );
 }
 
-function Segment({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[segStyles.cell, active && segStyles.cellActive]}>
-      <Text style={[segStyles.cellText, active && segStyles.cellTextActive]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-const segStyles = StyleSheet.create({
-  cell: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  cellActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#FFF3E8',
-  },
-  cellText: { color: colors.textSecondary, fontWeight: '600' },
-  cellTextActive: { color: colors.primary },
-});
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 24 },
   title: {
@@ -127,15 +101,15 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 8,
   },
-  sub: { fontSize: 16, color: colors.textSecondary, marginBottom: 24 },
-  typeLabel: {
+  sub: { fontSize: 16, color: colors.textSecondary, marginBottom: 8 },
+  hint: {
     fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    fontWeight: '600',
+    color: colors.textMuted,
+    marginBottom: 16,
+    lineHeight: 18,
   },
-  segment: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   btn: { marginTop: 8 },
+  spinner: { marginTop: 12 },
   linkWrap: { marginTop: 24, alignItems: 'center' },
   linkText: { color: colors.textSecondary, fontSize: 15 },
   linkAccent: { color: colors.primary, fontWeight: '700' },

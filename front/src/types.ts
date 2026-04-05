@@ -41,6 +41,8 @@ export type Tour = {
   /** если задано — для пользователя нужна купленная ачивка */
   unlockId?: AchievementId;
   ownerCompanyId?: string;
+  /** автор тура на бэкенде (чтобы «Мои туры» для турагента) */
+  createdBy?: number;
 };
 
 export type UserProfile = {

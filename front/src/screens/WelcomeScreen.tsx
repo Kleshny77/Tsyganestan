@@ -17,8 +17,9 @@ export function WelcomeScreen({ navigation }: Props) {
     <View style={[styles.root, { paddingTop: insets.top + 24 }]}>
       <View style={styles.center}>
         <GradientLogo />
-        <Text style={styles.title}>Маркетплейс путешествий</Text>
-        <Text style={styles.tagline}>Дорогие билеты и плохие туры!</Text>
+        <Text style={styles.brand}>я.цыган</Text>
+        <Text style={styles.title}>Дорогие билеты и плохие туры</Text>
+        <Text style={styles.tagline}>Сервис, который вы заслужили</Text>
       </View>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         <PrimaryButton
@@ -38,15 +39,22 @@ export function WelcomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 24 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  brand: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: colors.text,
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   tagline: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
     textAlign: 'center',
   },

@@ -1,6 +1,7 @@
 import { apiRequest } from './client';
 
-export interface Tour {
+/** Ответ API `/tours` (не путать с UI-моделью Tour в types.ts). */
+export interface ApiTour {
   id: number;
   title: string;
   description: string;
@@ -18,15 +19,15 @@ export interface TourPayload {
   location: string;
 }
 
-export const listTours = () => apiRequest<Tour[]>('/tours/');
+export const listTours = () => apiRequest<ApiTour[]>('/tours/');
 
-export const getTour = (id: number) => apiRequest<Tour>(`/tours/${id}`);
+export const getTour = (id: number) => apiRequest<ApiTour>(`/tours/${id}`);
 
 export const createTour = (data: TourPayload, token: string) =>
-  apiRequest<Tour>('/tours/', { method: 'POST', body: JSON.stringify(data) }, token);
+  apiRequest<ApiTour>('/tours/', { method: 'POST', body: JSON.stringify(data) }, token);
 
 export const updateTour = (id: number, data: TourPayload, token: string) =>
-  apiRequest<Tour>(`/tours/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token);
+  apiRequest<ApiTour>(`/tours/${id}`, { method: 'PUT', body: JSON.stringify(data) }, token);
 
 export const deleteTour = (id: number, token: string) =>
   apiRequest<{ message: string }>(`/tours/${id}`, { method: 'DELETE' }, token);

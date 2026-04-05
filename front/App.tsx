@@ -1,12 +1,14 @@
 import React from 'react';
-import { StatusBar, StyleSheet, useColorScheme } from 'react-native';
+import { Platform, StatusBar, StyleSheet, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { enableScreens } from 'react-native-screens';
 import { AppProvider } from './src/context/AppContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
-enableScreens(true);
+if (Platform.OS !== 'web') {
+  enableScreens(true);
+}
 
 function App() {
   const isDark = useColorScheme() === 'dark';

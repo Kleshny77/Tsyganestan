@@ -10,7 +10,7 @@ export interface User {
 
 export interface LoginResponse {
   access_token: string;
-  token_type: string;
+  token_type?: string;
 }
 
 export function login(username: string, password: string) {
@@ -20,11 +20,13 @@ export function login(username: string, password: string) {
   });
 }
 
+export type ApiRole = 'user' | 'tour_agent' | 'admin';
+
 export function register(
   username: string,
   email: string,
   password: string,
-  role: string = 'user',
+  role: ApiRole = 'user',
 ) {
   return apiRequest<User>('/auth/register', {
     method: 'POST',

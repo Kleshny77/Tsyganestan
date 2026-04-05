@@ -1,6 +1,15 @@
 run-local:
 	docker-compose up --build -d
 
+# Веб: порт по умолчанию 3010 (см. webpack.config.js). Свой: WEB_PORT=3005 make web
+web:
+	@cd front && npm run web
+
+# Сборка как на GitHub Pages. Пример: make web-build-pages PUBLIC_PATH=/Tsyganestan/
+PUBLIC_PATH ?= /Tsyganestan/
+web-build-pages:
+	@cd front && PUBLIC_PATH=$(PUBLIC_PATH) yarn web:build && touch dist/.nojekyll
+
 # Копия проекта в ~/Tsyganestan-ascii-build + npm + pod install (обход кириллицы в пути для iOS).
 ios-sync-ascii:
 	@chmod +x scripts/sync-to-ascii-path.sh

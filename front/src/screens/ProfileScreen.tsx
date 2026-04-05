@@ -19,8 +19,15 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileHome'>;
 
 export function ProfileScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { user, points, logout, earnedBadges, setAvatar, accountType } =
-    useApp();
+  const {
+    user,
+    points,
+    logout,
+    earnedBadges,
+    setAvatar,
+    accountType,
+    apiRole,
+  } = useApp();
 
   const pickAvatar = async () => {
     const res = await launchImageLibrary({ mediaType: 'photo' });
@@ -54,6 +61,15 @@ export function ProfileScreen({ navigation }: Props) {
         <View style={styles.userMeta}>
           <Text style={styles.name}>{user?.name ?? 'Гость'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
+          {apiRole ? (
+            <Text style={styles.rolePill}>
+              {apiRole === 'tour_agent'
+                ? '🗺 Турагент'
+                : apiRole === 'admin'
+                  ? '🔑 Админ'
+                  : '👤 Путешественник'}
+            </Text>
+          ) : null}
           {accountType === 'business' && user?.companyName ? (
             <Text style={styles.company}>{user.companyName}</Text>
           ) : null}
@@ -178,7 +194,13 @@ const styles = StyleSheet.create({
   userMeta: { flex: 1 },
   name: { fontSize: 20, fontWeight: '800', color: colors.text },
   email: { color: colors.textSecondary, marginTop: 4 },
-  company: { color: colors.businessBlue, marginTop: 4, fontWeight: '700' },
+  rolePill: {
+    marginTop: 8,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  company: { color: colors.businessBlue, marginTop: 6, fontWeight: '700' },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'center',

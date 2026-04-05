@@ -1,4 +1,18 @@
-const API_BASE_URL = 'https://tsyganestan-production.up.railway.app';
+/** Подставляется при web-сборке (webpack DefinePlugin), иначе дефолт. */
+const RAILWAY_API =
+  process.env.PUBLIC_API_URL || 'https://tsyganestan-production.up.railway.app';
+
+/** В браузере на localhost webpack-dev-server проксирует /auth, /tours, /users на API. */
+function resolveApiBase(): string {
+  const host =
+    typeof window !== 'undefined' ? window.location?.hostname : undefined;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return '';
+  }
+  return RAILWAY_API;
+}
+
+const API_BASE_URL = resolveApiBase();
 
 export class ApiError extends Error {
   constructor(
@@ -30,8 +44,13 @@ export async function apiRequest<T>(
     let message = `HTTP ${response.status}`;
     try {
       const body = await response.json();
-      message = body.detail ?? message;
-    } catch {}
+      const d = body.detail;
+      if (typeof d === 'string') message = d;
+      else if (Array.isArray(d))
+        message = d.map((x: { msg?: string }) => x.msg).filter(Boolean).join(', ') || message;
+    } catch {
+      /* ignore */
+    }
     throw new ApiError(response.status, message);
   }
 

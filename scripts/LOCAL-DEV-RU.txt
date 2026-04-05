@@ -1,0 +1,35 @@
+Шпаргалка по типичным ошибкам (Tsyganestan / front)
+
+1) EADDRINUSE :::3000 или :::3010
+   Старый webpack/node всё ещё слушает порт. Либо убей процесс:
+     lsof -i :3000
+     kill <PID>
+   Либо другой порт:
+     cd front && WEB_PORT=3005 npm run web
+
+2) iOS: bad component / Missing source / pod validate failed
+   В пути есть кириллица (например …/ВШЭ/…). CocoaPods + RN 0.84 так не работают.
+   Варианты: make ios-sync-ascii && потом из ~/Tsyganestan-ascii-build/front — npm run ios
+   Или: make ios (скрипт сам синхронизирует и запускает).
+   Всегда открывай Front.xcworkspace, не .xcodeproj.
+
+3) iOS: sandbox not in sync with Podfile.lock / нет Pods-Front.debug.xcconfig
+   Ты в front, а не в front/ios:
+     cd front/ios && pod install
+   Потом снова run-ios или Xcode → Workspace.
+
+4) cd front/ios из каталога front → «no such file»
+   Нужно: cd ios   (уже находясь в …/front)
+
+5) Android: IBM_SEMERU / Gradle 9
+   Должен быть gradle-wrapper 8.13 в front/android (репозиторий уже так настроен).
+   Сборка:
+     cd front && npm run android:assemble
+   Или с JDK 17:
+     export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+     cd front/android && ./gradlew :app:assembleDebug
+
+6) Android: No emulators / app fails to launch
+   Создай AVD в Android Studio или подключи устройство по USB.
+
+7) Веб по умолчанию: http://localhost:3010 (не 3000).

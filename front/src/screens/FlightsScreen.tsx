@@ -32,7 +32,7 @@ export function FlightsScreen({ navigation }: Props) {
     getAllowedSearchLetters,
     isCategoryUnlocked,
   } = useApp();
-  const [q, setQ] = useState('опаао');
+  const [q, setQ] = useState('');
   const [bizTab, setBizTab] = useState<'all' | 'mine'>('all');
   const [selectedCat, setSelectedCat] = useState<Record<string, string>>({});
 
@@ -87,7 +87,7 @@ export function FlightsScreen({ navigation }: Props) {
         <TextInput
           value={q}
           onChangeText={onChangeQuery}
-          placeholder="Поиск..."
+          placeholder="Поиск рейсов..."
           placeholderTextColor={colors.textMuted}
           style={styles.search}
         />

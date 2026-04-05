@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -10,6 +11,8 @@ import {
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { ApiError } from '../api/client';
+import { createTour } from '../api/tours';
 import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -28,16 +31,16 @@ function splitList(s: string) {
 
 export function AddTourScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { addTour, user } = useApp();
+  const { addTour, apiToken, refreshTours, user } = useApp();
   const [companyName, setCompanyName] = useState(user?.companyName ?? '');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('45000');
-  const [rating, setRating] = useState('1.2');
   const [countries, setCountries] = useState('');
   const [cities, setCities] = useState('');
   const [sights, setSights] = useState('');
   const [uris, setUris] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const pickPhotos = async () => {
     const res = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 5 });
@@ -45,17 +48,50 @@ export function AddTourScreen({ navigation }: Props) {
     if (next?.length) setUris(u => [...u, ...next].slice(0, 6));
   };
 
-  const save = () => {
+  const save = async () => {
     const owner = user?.companyName || user?.email || 'company';
+    const co = companyName.trim() || 'Ваше агентство';
+    const ti = title.trim() || 'Без названия';
+    const desc = description.trim() || 'Описание появится позже.';
+    const pr = Number(price.replace(/\s/g, '')) || 0;
+    const cList = splitList(countries);
+    const cityList = splitList(cities);
+    const sightList = splitList(sights);
+
+    if (apiToken) {
+      const location = [co, cList.join(', '), cityList.join(', '), sightList.join(', ')]
+        .filter(Boolean)
+        .join(' | ')
+        .slice(0, 2000);
+      setSaving(true);
+      try {
+        await createTour(
+          { title: ti, description: desc, price: pr, location },
+          apiToken,
+        );
+        await refreshTours();
+        navigation.goBack();
+      } catch (e) {
+        const msg =
+          e instanceof ApiError
+            ? e.message
+            : 'Проверьте роль турагента и подключение к сети.';
+        Alert.alert('Не сохранилось', String(msg));
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
     addTour({
-      companyName: companyName.trim() || 'Ваше агентство',
-      title: title.trim() || 'Без названия',
-      description: description.trim() || 'Описание появится позже.',
-      rating: Math.min(5, Math.max(1, Number(rating) || 1)),
-      price: Number(price.replace(/\s/g, '')) || 0,
-      countries: splitList(countries).length ? splitList(countries) : ['Страна'],
-      cities: splitList(cities).length ? splitList(cities) : ['Город'],
-      sights: splitList(sights).length ? splitList(sights) : ['Достопримечательность'],
+      companyName: co,
+      title: ti,
+      description: desc,
+      rating: 1.2,
+      price: pr,
+      countries: cList.length ? cList : ['Страна'],
+      cities: cityList.length ? cityList : ['Город'],
+      sights: sightList.length ? sightList : ['Достопримечательность'],
       galleryEmoji: uris.length ? [] : ['📷', '🧳', '🗺️'],
       galleryUris: uris.length ? uris : undefined,
       ownerCompanyId: owner,
@@ -73,7 +109,11 @@ export function AddTourScreen({ navigation }: Props) {
       }}>
       <BackRow onPress={() => navigation.goBack()} />
       <Text style={styles.title}>Новый тур</Text>
-      <Text style={styles.sub}>Попадёт в «Мои туры».</Text>
+      <Text style={styles.sub}>
+        {apiToken
+          ? 'Публикация на сервере я.цыган (Railway).'
+          : 'Локально — войдите, чтобы сохранять на бэкенд.'}
+      </Text>
 
       <LabeledField label="Компания" value={companyName} onChangeText={setCompanyName} />
       <LabeledField label="Название" value={title} onChangeText={setTitle} />
@@ -85,7 +125,6 @@ export function AddTourScreen({ navigation }: Props) {
         style={{ minHeight: 100, textAlignVertical: 'top' }}
       />
       <LabeledField label="Цена (₽)" value={price} onChangeText={setPrice} keyboardType="number-pad" />
-      <LabeledField label="Рейтинг (1–5)" value={rating} onChangeText={setRating} keyboardType="decimal-pad" />
       <LabeledField
         label="Страны (через запятую)"
         value={countries}
@@ -94,7 +133,7 @@ export function AddTourScreen({ navigation }: Props) {
       <LabeledField label="Города" value={cities} onChangeText={setCities} />
       <LabeledField label="Достопримечательности" value={sights} onChangeText={setSights} />
 
-      <Text style={styles.photosTitle}>Фотографии</Text>
+      <Text style={styles.photosTitle}>Фотографии (только локальный режим)</Text>
       <Pressable style={styles.photoBtn} onPress={pickPhotos}>
         <Text style={styles.photoBtnText}>Добавить из галереи</Text>
       </Pressable>
@@ -104,16 +143,21 @@ export function AddTourScreen({ navigation }: Props) {
         ))}
       </View>
 
-      <PrimaryButton title="Опубликовать тур" onPress={save} style={{ marginTop: 16 }} />
+      <PrimaryButton
+        title={saving ? 'Публикуем…' : 'Опубликовать тур'}
+        onPress={save}
+        disabled={saving}
+        style={{ marginTop: 16 }}
+      />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  title: { fontSize: 28, fontWeight: '900', marginTop: 8 },
-  sub: { marginTop: 8, color: colors.textSecondary, marginBottom: 12 },
-  photosTitle: { marginTop: 8, fontWeight: '800' },
+  title: { fontSize: 28, fontWeight: '900', marginTop: 8, color: colors.text },
+  sub: { marginTop: 8, color: colors.textSecondary, marginBottom: 12, lineHeight: 20 },
+  photosTitle: { marginTop: 8, fontWeight: '800', color: colors.text },
   photoBtn: {
     marginTop: 10,
     padding: 14,

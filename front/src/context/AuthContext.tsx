@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+const TOKEN_KEY = 'tsyganestan_legacy_auth_token';
 
 interface TokenClaims {
   sub: string;
@@ -15,26 +18,6 @@ function decodeJWT(token: string): TokenClaims | null {
   } catch {
     return null;
   }
-}
-
-function readStorage(key: string): string | null {
-  try {
-    return typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeStorage(key: string, value: string) {
-  try {
-    if (typeof window !== 'undefined') window.localStorage.setItem(key, value);
-  } catch {}
-}
-
-function clearStorage(key: string) {
-  try {
-    if (typeof window !== 'undefined') window.localStorage.removeItem(key);
-  } catch {}
 }
 
 interface AuthContextType {
@@ -55,27 +38,33 @@ const AuthContext = createContext<AuthContextType>({
   signOut: () => {},
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(() => {
-    const stored = readStorage('token');
-    if (!stored) return null;
-    const claims = decodeJWT(stored);
-    if (!claims || claims.exp * 1000 < Date.now()) {
-      clearStorage('token');
-      return null;
-    }
-    return stored;
-  });
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const stored = await AsyncStorage.getItem(TOKEN_KEY);
+      if (!stored) return;
+      const claims = decodeJWT(stored);
+      if (!claims || claims.exp * 1000 < Date.now()) {
+        await AsyncStorage.removeItem(TOKEN_KEY);
+        return;
+      }
+      setToken(stored);
+    })();
+  }, []);
 
   const claims = token ? decodeJWT(token) : null;
 
   const signIn = (newToken: string) => {
-    writeStorage('token', newToken);
+    AsyncStorage.setItem(TOKEN_KEY, newToken).catch(() => {});
     setToken(newToken);
   };
 
   const signOut = () => {
-    clearStorage('token');
+    AsyncStorage.removeItem(TOKEN_KEY).catch(() => {});
     setToken(null);
   };
 

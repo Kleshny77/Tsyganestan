@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BackRow } from '../components/BackRow';
 import { useApp } from '../context/AppContext';
 import { STORE_ITEMS } from '../data/mockCatalog';
 import type { ProfileStackParamList } from '../navigation/types';
@@ -15,14 +16,12 @@ export function AchievementsScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 12 }]}>
-      <View style={styles.headRow}>
-        <Text style={styles.back} onPress={() => navigation.goBack()}>
-          ← Назад
-        </Text>
-      </View>
+      <BackRow onPress={() => navigation.goBack()} />
       <View style={styles.titleRow}>
         <Text style={styles.title}>Ачивки</Text>
-        <Text style={styles.medal}>🏅</Text>
+        <Text style={styles.medal} accessibilityLabel="Награда">
+          🏅
+        </Text>
       </View>
       <Text style={styles.balance}>Баланс: {points} баллов</Text>
 
@@ -62,16 +61,26 @@ export function AchievementsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 20 },
-  headRow: { marginBottom: 8 },
-  back: { color: colors.textSecondary, fontSize: 16, fontWeight: '600' },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    marginBottom: 4,
+  },
   title: { fontSize: 28, fontWeight: '900', color: colors.text },
-  medal: { fontSize: 26 },
-  balance: { marginTop: 8, marginBottom: 16, color: colors.textSecondary, fontWeight: '600' },
+  medal: { fontSize: 28 },
+  balance: {
+    marginTop: 4,
+    marginBottom: 16,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 15,
+  },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    padding: 16,
     borderRadius: 16,
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -79,17 +88,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 12,
   },
-  icon: { fontSize: 28 },
+  icon: { fontSize: 32 },
   mid: { flex: 1 },
   itemTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  itemDesc: { color: colors.textSecondary, marginTop: 4, lineHeight: 18 },
-  price: { marginTop: 6, color: colors.primary, fontWeight: '800' },
+  itemDesc: { color: colors.textSecondary, marginTop: 4, lineHeight: 20 },
+  price: { marginTop: 8, color: colors.primary, fontWeight: '800', fontSize: 15 },
   buyWrap: {
     backgroundColor: colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
   },
   buyDisabled: { backgroundColor: colors.border },
-  buyText: { color: '#fff', fontWeight: '800' },
+  buyText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
