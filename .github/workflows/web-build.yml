@@ -1,0 +1,48 @@
+name: Web Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-web:
+    name: Build Web App
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install front dependencies
+        working-directory: front
+        run: yarn install --frozen-lockfile
+
+      - name: Build Web App
+        working-directory: front
+        run: yarn web:build
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: web-app
+          path: front/dist/
+          retention-days: 30
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./front/dist
+          force_orphan: true

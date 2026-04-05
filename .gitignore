@@ -136,6 +136,9 @@ Thumbs.db
 *.keystore
 !front/android/app/debug.keystore
 
+# Web build
+front/dist/
+
 # Local development
 *.local.*
 

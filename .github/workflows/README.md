@@ -2,6 +2,24 @@
 
 ## Настроенные workflow
 
+### 🌐 Web Build (`.github/workflows/web-build.yml`)
+
+**Что делает:**
+- Собирает веб-версию приложения через **React Native Web**
+- Деплоит на **GitHub Pages** (автоматически при пуше в `main`)
+
+**Артефакты:**
+- `web-app/` — статические файлы (HTML, CSS, JS)
+
+**Ссылка на приложение:**
+- После деплоя доступно по адресу: `https://<username>.github.io/<repo>/`
+
+**Запускается:**
+- При пуше в `main`
+- При pull request в `main`
+
+---
+
 ### 🤖 Android Build (`.github/workflows/android-build.yml`)
 
 **Что делает:**
