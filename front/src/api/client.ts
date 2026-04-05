@@ -1,3 +1,5 @@
+const API_BASE_URL = 'https://tsyganestan-production.up.railway.app';
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -18,7 +20,8 @@ export async function apiRequest<T>(
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  const response = await fetch(path, {
+  const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+  const response = await fetch(url, {
     ...options,
     headers: { ...headers, ...(options.headers as Record<string, string>) },
   });
