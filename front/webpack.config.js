@@ -146,6 +146,10 @@ module.exports = (env, argv) => {
           process.env.PUBLIC_API_URL ||
             'https://tsyganestan-production.up.railway.app',
         ),
+        /** GitHub Actions: PUBLIC_FORCE_API_MOCK=1 → бандл всегда без сетевого API */
+        'process.env.PUBLIC_FORCE_API_MOCK': JSON.stringify(
+          process.env.PUBLIC_FORCE_API_MOCK || '',
+        ),
       }),
     ],
     performance: isProd

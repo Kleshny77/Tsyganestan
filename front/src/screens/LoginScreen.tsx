@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ApiError } from '../api/client';
+import { getRequestErrorMessage } from '../api/client';
 import { userAlert } from '../lib/userAlert';
 import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
@@ -35,9 +35,10 @@ export function LoginScreen({ navigation }: Props) {
     try {
       await login(email.trim(), password);
     } catch (e) {
-      const msg =
-        e instanceof ApiError ? e.message : 'Не удалось войти. Проверьте сеть.';
-      userAlert('Ошибка входа', String(msg));
+      userAlert(
+        'Ошибка входа',
+        getRequestErrorMessage(e, 'Не удалось войти. Проверьте сеть.'),
+      );
     } finally {
       setBusy(false);
     }

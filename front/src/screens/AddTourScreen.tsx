@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ApiError } from '../api/client';
+import { getRequestErrorMessage } from '../api/client';
 import { createTour } from '../api/tours';
 import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
@@ -65,11 +65,13 @@ export function AddTourScreen({ navigation }: Props) {
         await refreshTours();
         navigation.goBack();
       } catch (e) {
-        const msg =
-          e instanceof ApiError
-            ? e.message
-            : 'Проверьте роль турагента и подключение к сети.';
-        userAlert('Не сохранилось', String(msg));
+        userAlert(
+          'Не сохранилось',
+          getRequestErrorMessage(
+            e,
+            'Проверьте роль турагента и подключение к сети.',
+          ),
+        );
       } finally {
         setSaving(false);
       }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ApiError } from '../api/client';
+import { getRequestErrorMessage } from '../api/client';
 import { userAlert } from '../lib/userAlert';
 import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
@@ -52,11 +52,13 @@ export function RegisterFormScreen({ navigation, route }: Props) {
         );
       }
     } catch (e) {
-      const msg =
-        e instanceof ApiError
-          ? e.message
-          : 'Не удалось зарегистрироваться. Попробуйте другой email.';
-      userAlert('Ошибка', String(msg));
+      userAlert(
+        'Ошибка',
+        getRequestErrorMessage(
+          e,
+          'Не удалось зарегистрироваться. Попробуйте другой email.',
+        ),
+      );
     } finally {
       setBusy(false);
     }

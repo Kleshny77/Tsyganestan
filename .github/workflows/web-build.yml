@@ -1,6 +1,6 @@
 # Деплой веб-клиента (react-native-web) на GitHub Pages.
 # После пуша в main: Settings → Pages → Source: GitHub Actions.
-# Сайт: https://<user>.github.io/<repo>/ — API идёт на Railway (CORS в app/main.py).
+# Сайт: https://<user>.github.io/<repo>/ — в бандле вшиты моки API (PUBLIC_FORCE_API_MOCK).
 
 name: Deploy Web to GitHub Pages
 
@@ -44,6 +44,8 @@ jobs:
           # Подпапка GitHub Pages для репозитория (имя репо = сегмент URL)
           PUBLIC_PATH: /${{ github.event.repository.name }}/
           NODE_ENV: production
+          # Вшить моки в артефакт Pages — вход/регистрация без Railway и CORS
+          PUBLIC_FORCE_API_MOCK: '1'
         run: yarn web:build
 
       - name: Jekyll off + SPA

@@ -27,6 +27,22 @@ export class ApiError extends Error {
   }
 }
 
+/** instanceof ломается при дублировании класса в чанках — для UI используем это. */
+export function getRequestErrorMessage(e: unknown, fallback: string): string {
+  if (e instanceof ApiError) return e.message;
+  if (
+    e !== null &&
+    typeof e === 'object' &&
+    'name' in e &&
+    (e as { name: string }).name === 'ApiError' &&
+    'message' in e
+  ) {
+    return String((e as { message: string }).message);
+  }
+  if (e instanceof Error && e.message) return e.message;
+  return fallback;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},

@@ -1,11 +1,18 @@
 import { Platform } from 'react-native';
 
+function buildForcesMock(): boolean {
+  return String(process.env.PUBLIC_FORCE_API_MOCK || '') === '1';
+}
+
 /**
  * На web вне localhost все запросы идут в in-memory моки (GitHub Pages без бэкенда).
  * Локальная разработка: webpack proxy → реальный API.
  * Принудительно выключить моки на web: localStorage TSYG_USE_REAL_API = "1"
+ * (не действует, если сборка с PUBLIC_FORCE_API_MOCK=1 — так задеплоен GitHub Pages).
  */
 export function isApiMocked(): boolean {
+  if (buildForcesMock()) return true;
+
   if (Platform.OS !== 'web') return false;
   if (typeof window === 'undefined') return false;
   const h = window.location.hostname;
