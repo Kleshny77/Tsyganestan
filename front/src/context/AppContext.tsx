@@ -94,7 +94,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   >(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [accountType, setAccountType] = useState<AccountType>('user');
-  const [points, setPoints] = useState(150);
+  const [points, setPoints] = useState(1000);
   const [purchased, setPurchased] = useState<AchievementId[]>([]);
   const [earnedBadges, setEarnedBadges] =
     useState<EarnedMeta[]>(defaultEarned);
@@ -286,7 +286,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addPoints = useCallback((delta: number) => {
-    setPoints(p => Math.max(0, p + delta));
+    setPoints(p => p + delta);
   }, []);
 
   const hasPurchased = useCallback(

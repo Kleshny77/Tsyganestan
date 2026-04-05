@@ -9,6 +9,7 @@
         html, body {
             height: 100%;
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             margin: 0;
             padding: 0;
         }
@@ -22,12 +23,31 @@
             flex: 1;
             flex-direction: column;
             min-height: 100vh;
+            min-height: -webkit-fill-available;
             width: 100%;
         }
     </style>
 </head>
 <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <pre id="tsyganestan-boot-errors" style="display:none;margin:0;padding:16px;background:#ffebee;color:#b00020;font:13px/1.4 ui-monospace,monospace;white-space:pre-wrap;flex-shrink:0"></pre>
     <div id="root"></div>
+    <script>
+      (function () {
+        var n = document.getElementById('tsyganestan-boot-errors');
+        if (!n) return;
+        function showLine(msg) {
+          n.style.display = 'block';
+          n.textContent = (n.textContent ? n.textContent + '\n\n' : '') + msg;
+        }
+        window.addEventListener('error', function (e) {
+          showLine((e.message || 'error') + (e.error && e.error.stack ? '\n' + e.error.stack : ''));
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e.reason;
+          showLine('Unhandled promise: ' + (r && r.stack ? r.stack : String(r)));
+        });
+      })();
+    </script>
 </body>
 </html>

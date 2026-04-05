@@ -7,13 +7,11 @@ const API_PROXY_TARGET =
   process.env.TSYG_API_PROXY ||
   'https://tsyganestan-production.up.railway.app';
 
-/** Для GitHub Pages: PUBLIC_PATH=/RepoName/ (со слэшем в конце). Локально: /. */
-const publicPath = process.env.PUBLIC_PATH || '/';
-
 /**
- * Dev server: по умолчанию «auto» от базы WEBPACK_DEV_SERVER_BASE_PORT (3010 в npm script),
- * чтобы не падать с EADDRINUSE, если порт занят — возьмётся 3011, 3012, …
- * Жёстко задать порт: WEB_PORT=3005 npm run web
+ * Dev server: порт «auto» от базы WEBPACK_DEV_SERVER_BASE_PORT (3000 в npm script).
+ * Если 3000 занят — поднимется 3001, 3002, … (смотри URL в логе webpack).
+ * Жёстко задать порт: WEB_PORT=3010 npm run web
+ * Не открывать браузер: WEB_OPEN=0 npm run web
  */
 function resolveWebDevPort() {
   const raw = process.env.WEB_PORT;
@@ -30,10 +28,27 @@ const linearGradientShim = path.resolve(
   __dirname,
   'src/shims/linear-gradient-web-shim.js',
 );
+const asyncStorageShim = path.resolve(
+  __dirname,
+  'src/shims/async-storage.web-shim.js',
+);
+const imagePickerShim = path.resolve(
+  __dirname,
+  'src/shims/react-native-image-picker.web.js',
+);
 
 module.exports = (env, argv) => {
   const mode = argv.mode || 'development';
   const isProd = mode === 'production';
+  /**
+   * production: по умолчанию 'auto' → в index.html относительный script src (bundle.xxx.js).
+   * Работает и с dev-сервером по http, и при открытии dist/index.html через file://.
+   * CI/GitHub Pages: задать PUBLIC_PATH=/RepoName/ (со слэшем).
+   * development: '/' — нужен для HMR dev-server.
+   */
+  const publicPath = isProd
+    ? process.env.PUBLIC_PATH || 'auto'
+    : '/';
 
   return {
     mode,
@@ -53,6 +68,10 @@ module.exports = (env, argv) => {
         ),
         'react-native-reanimated': reanimatedStub,
         'react-native-linear-gradient': linearGradientShim,
+        // Точное имя пакета (иногда exports обходят — дублируем плагином ниже).
+        '@react-native-async-storage/async-storage': asyncStorageShim,
+        '@react-native-async-storage/async-storage$': asyncStorageShim,
+        'react-native-image-picker': imagePickerShim,
       },
       extensions: ['.web.js', '.web.ts', '.web.tsx', '.js', '.ts', '.tsx'],
     },
@@ -60,17 +79,34 @@ module.exports = (env, argv) => {
       rules: [
         {
           test: /\.(js|jsx|ts|tsx)$/,
+          // Babel только на нашем коде. Прогон node_modules ломает ESM (@react-navigation и др.)
+          // в Safari: «Can't find variable: exports».
+          exclude: /node_modules/,
           use: {
             loader: 'babel-loader',
             options: {
               presets: [
-                '@babel/preset-env',
+                ['@babel/preset-env', { modules: false }],
                 '@babel/preset-react',
                 '@babel/preset-typescript',
               ],
-              plugins: ['react-native-web'],
+              plugins: [
+                ['@babel/plugin-transform-class-properties', { loose: true }],
+                ['@babel/plugin-transform-private-methods', { loose: true }],
+                [
+                  '@babel/plugin-transform-private-property-in-object',
+                  { loose: true },
+                ],
+                'react-native-web',
+              ],
             },
           },
+        },
+        {
+          test: /\.(js|mjs)$/,
+          include: /node_modules/,
+          resolve: { fullySpecified: false },
+          type: 'javascript/auto',
         },
         {
           test: /\.(png|jpe?g|gif|svg)$/,
@@ -88,10 +124,24 @@ module.exports = (env, argv) => {
         /^react-native-linear-gradient$/,
         linearGradientShim,
       ),
+      // afterResolve смотрит на абсолютный путь; иначе часто тянется lib/module/index.js мимо alias.
+      new webpack.NormalModuleReplacementPlugin(
+        /[\\/]node_modules[\\/]@react-native-async-storage[\\/]async-storage[\\/]/,
+        asyncStorageShim,
+      ),
+      new webpack.NormalModuleReplacementPlugin(
+        /^react-native-image-picker$/,
+        imagePickerShim,
+      ),
       new HtmlWebpackPlugin({
         template: path.join(__dirname, 'public', 'index.html'),
       }),
       new webpack.DefinePlugin({
+        /** Metro задаёт глобально; без этого gesture-handler и др. падают в web-сборке. */
+        __DEV__: JSON.stringify(!isProd),
+        'process.env.NODE_ENV': JSON.stringify(
+          isProd ? 'production' : 'development',
+        ),
         'process.env.PUBLIC_API_URL': JSON.stringify(
           process.env.PUBLIC_API_URL ||
             'https://tsyganestan-production.up.railway.app',
@@ -110,6 +160,8 @@ module.exports = (env, argv) => {
         directory: path.join(__dirname, 'public'),
       },
       hot: true,
+      /** Открыть вкладку с тем портом, который реально занял dev-server (избегает путаницы с :3000). */
+      open: process.env.WEB_OPEN !== '0',
       port: webDevPort,
       proxy: [
         {

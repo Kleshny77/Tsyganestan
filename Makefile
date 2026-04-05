@@ -1,7 +1,7 @@
 run-local:
 	docker-compose up --build -d
 
-# Веб: базовый порт 3010; если занят — dev-server сам возьмёт 3011+ (см. webpack + npm script). Свой: WEB_PORT=3005 make web
+# Веб: базовый порт 3000; если занят — 3001+ (URL в логе). Свой порт: WEB_PORT=3010 make web
 web:
 	@cd front && npm run web
 
