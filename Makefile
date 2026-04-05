@@ -1,7 +1,7 @@
 run-local:
 	docker-compose up --build -d
 
-# Веб: порт по умолчанию 3010 (см. webpack.config.js). Свой: WEB_PORT=3005 make web
+# Веб: базовый порт 3010; если занят — dev-server сам возьмёт 3011+ (см. webpack + npm script). Свой: WEB_PORT=3005 make web
 web:
 	@cd front && npm run web
 

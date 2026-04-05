@@ -10,7 +10,26 @@ const API_PROXY_TARGET =
 /** Для GitHub Pages: PUBLIC_PATH=/RepoName/ (со слэшем в конце). Локально: /. */
 const publicPath = process.env.PUBLIC_PATH || '/';
 
+/**
+ * Dev server: по умолчанию «auto» от базы WEBPACK_DEV_SERVER_BASE_PORT (3010 в npm script),
+ * чтобы не падать с EADDRINUSE, если порт занят — возьмётся 3011, 3012, …
+ * Жёстко задать порт: WEB_PORT=3005 npm run web
+ */
+function resolveWebDevPort() {
+  const raw = process.env.WEB_PORT;
+  if (raw == null || String(raw).trim() === '') return 'auto';
+  if (String(raw).trim().toLowerCase() === 'auto') return 'auto';
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1 || n > 65535) return 'auto';
+  return n;
+}
+const webDevPort = resolveWebDevPort();
+
 const reanimatedStub = path.resolve(__dirname, 'src/shims/reanimated-web-stub.js');
+const linearGradientShim = path.resolve(
+  __dirname,
+  'src/shims/linear-gradient-web-shim.js',
+);
 
 module.exports = (env, argv) => {
   const mode = argv.mode || 'development';
@@ -33,6 +52,7 @@ module.exports = (env, argv) => {
           'src/shims/react-native-sensors.web.js',
         ),
         'react-native-reanimated': reanimatedStub,
+        'react-native-linear-gradient': linearGradientShim,
       },
       extensions: ['.web.js', '.web.ts', '.web.tsx', '.js', '.ts', '.tsx'],
     },
@@ -64,6 +84,10 @@ module.exports = (env, argv) => {
         /^react-native-reanimated$/,
         reanimatedStub,
       ),
+      new webpack.NormalModuleReplacementPlugin(
+        /^react-native-linear-gradient$/,
+        linearGradientShim,
+      ),
       new HtmlWebpackPlugin({
         template: path.join(__dirname, 'public', 'index.html'),
       }),
@@ -86,8 +110,7 @@ module.exports = (env, argv) => {
         directory: path.join(__dirname, 'public'),
       },
       hot: true,
-      // 3000 часто занят старым процессом — по умолчанию 3010; свой порт: WEB_PORT=3005 npm run web
-      port: Number(process.env.WEB_PORT) || 3010,
+      port: webDevPort,
       proxy: [
         {
           context: ['/auth', '/tours', '/users'],

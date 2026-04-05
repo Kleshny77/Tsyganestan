@@ -1,0 +1,8 @@
+{
+  "name": "tsyganestan",
+  "private": true,
+  "scripts": {
+    "web": "npm run web --prefix front",
+    "web:build": "npm run web:build --prefix front"
+  }
+}
