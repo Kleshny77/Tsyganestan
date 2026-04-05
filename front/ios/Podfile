@@ -1,3 +1,7 @@
+# ВАЖНО: путь к проекту должен содержать только ASCII (без кириллицы и т.п.).
+# Иначе prebuild React Native 0.84+ часто падает с "bad component(expected absolute path component)".
+# Решение: скопируйте репозиторий, например, в ~/dev/Tsyganestan и запускайте pod install оттуда.
+#
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(

@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,24 +11,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
-import type { ToursStackParamList } from '../navigation/types';
-import type { Tour } from '../types';
+import type { FlightsStackParamList } from '../navigation/types';
+import type { Flight } from '../types';
 import { colors } from '../theme/colors';
 
-type Props = NativeStackScreenProps<ToursStackParamList, 'ToursHome'>;
+type Props = NativeStackScreenProps<FlightsStackParamList, 'FlightsHome'>;
 
-function matchesSearch(t: Tour, q: string) {
+function matchesSearch(f: Flight, q: string) {
   if (!q.trim()) return true;
-  const s = `${t.companyName} ${t.title} ${t.description} ${t.countries.join(' ')} ${t.cities.join(' ')}`.toLowerCase();
+  const s = `${f.airlineName} ${f.routeFrom} ${f.routeTo}`.toLowerCase();
   return s.includes(q.toLowerCase());
 }
 
-export function ToursScreen({ navigation }: Props) {
+export function FlightsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { accountType, user, tours, getAllowedSearchLetters, isTourUnlocked } =
-    useApp();
-  const [q, setQ] = useState('');
+  const {
+    accountType,
+    user,
+    flights,
+    getAllowedSearchLetters,
+    isCategoryUnlocked,
+  } = useApp();
+  const [q, setQ] = useState('опаао');
   const [bizTab, setBizTab] = useState<'all' | 'mine'>('all');
+  const [selectedCat, setSelectedCat] = useState<Record<string, string>>({});
 
   const allowed = getAllowedSearchLetters();
   const allowedSet = useMemo(() => new Set(allowed), [allowed]);
@@ -46,14 +50,12 @@ export function ToursScreen({ navigation }: Props) {
   const ownerKey = user?.companyName || user?.email || '';
 
   const list = useMemo(() => {
-    let base = tours.filter(x => matchesSearch(x, q));
+    let base = flights.filter(f => matchesSearch(f, q));
     if (accountType === 'business' && bizTab === 'mine') {
-      base = base.filter(
-        x => x.ownerCompanyId && x.ownerCompanyId === ownerKey,
-      );
+      base = base.filter(f => f.ownerCompanyId && f.ownerCompanyId === ownerKey);
     }
     return base;
-  }, [accountType, bizTab, ownerKey, q, tours]);
+  }, [accountType, bizTab, flights, ownerKey, q]);
 
   const hintLetters =
     accountType === 'business'
@@ -62,18 +64,18 @@ export function ToursScreen({ navigation }: Props) {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8 }]}>
-      <Text style={styles.title}>Плохие туры</Text>
-      <Text style={styles.sub}>Худшие предложения на рынке</Text>
+      <Text style={styles.title}>Дорогие авиабилеты</Text>
+      <Text style={styles.sub}>Только самые премиум предложения</Text>
 
       {accountType === 'business' ? (
         <View style={styles.segment}>
           <Seg
-            label="Все туры"
+            label="Все авиабилеты"
             active={bizTab === 'all'}
             onPress={() => setBizTab('all')}
           />
           <Seg
-            label="Мои туры"
+            label="Мои авиабилеты"
             active={bizTab === 'mine'}
             onPress={() => setBizTab('mine')}
           />
@@ -98,8 +100,8 @@ export function ToursScreen({ navigation }: Props) {
       {accountType === 'business' && bizTab === 'mine' ? (
         <Pressable
           style={styles.fab}
-          onPress={() => navigation.navigate('AddTour')}
-          accessibilityLabel="Добавить тур">
+          onPress={() => navigation.navigate('AddFlight')}
+          accessibilityLabel="Добавить рейс">
           <Text style={styles.fabText}>＋</Text>
         </Pressable>
       ) : null}
@@ -110,19 +112,28 @@ export function ToursScreen({ navigation }: Props) {
           paddingTop: 8,
         }}
         showsVerticalScrollIndicator={false}>
-        {list.map(t => (
-          <TourCard
-            key={t.id}
-            tour={t}
-            unlocked={isTourUnlocked(t)}
-            onBook={() =>
-              navigation.navigate('GyroBooking', { kind: 'tour', tourId: t.id })
+        {list.map(f => (
+          <FlightCard
+            key={f.id}
+            flight={f}
+            selectedCategoryId={selectedCat[f.id] ?? f.categories[0]?.id}
+            onSelectCategory={cid => setSelectedCat(s => ({ ...s, [f.id]: cid }))}
+            isCategoryUnlocked={isCategoryUnlocked}
+            onBook={() => {
+              const cid = selectedCat[f.id] ?? f.categories[0]?.id;
+              navigation.navigate('GyroBooking', {
+                kind: 'flight',
+                flightId: f.id,
+                categoryId: cid,
+              });
+            }}
+            onGift={() =>
+              navigation.navigate('Gift', { kind: 'flight' })
             }
-            onGift={() => navigation.navigate('Gift', { kind: 'tour' })}
           />
         ))}
         {list.length === 0 ? (
-          <Text style={styles.empty}>Пусто. Добавьте тур или смените поиск.</Text>
+          <Text style={styles.empty}>Ничего не найдено — попробуйте другие буквы.</Text>
         ) : null}
       </ScrollView>
     </View>
@@ -147,79 +158,70 @@ function Seg({
   );
 }
 
-function TourCard({
-  tour,
-  unlocked,
+function FlightCard({
+  flight,
+  selectedCategoryId,
+  onSelectCategory,
+  isCategoryUnlocked,
   onBook,
   onGift,
 }: {
-  tour: Tour;
-  unlocked: boolean;
+  flight: Flight;
+  selectedCategoryId?: string;
+  onSelectCategory: (id: string) => void;
+  isCategoryUnlocked: (c: { lockedByDefault: boolean }) => boolean;
   onBook: () => void;
   onGift: () => void;
 }) {
+  const cat = flight.categories.find(c => c.id === selectedCategoryId);
+  const topPrice = cat?.price ?? flight.categories[0]?.price ?? 0;
+
   return (
     <View style={styles.card}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.gallery}>
-          {tour.galleryUris?.length
-            ? tour.galleryUris.map((u, i) => (
-                <Image key={i} source={{ uri: u }} style={styles.gimg} />
-              ))
-            : tour.galleryEmoji.map((e, i) => (
-                <View key={i} style={styles.gph}>
-                  <Text style={styles.gemoji}>{e}</Text>
-                </View>
-              ))}
-        </View>
-      </ScrollView>
       <View style={styles.cardTop}>
-        <Text style={styles.company}>{tour.companyName}</Text>
-        <Text style={styles.star}>⭐ {tour.rating.toFixed(1)}</Text>
+        <Text style={styles.airline}>{flight.airlineName}</Text>
+        <Text style={styles.price}>{topPrice.toLocaleString('ru-RU')}₽</Text>
       </View>
-      <Text style={styles.ttitle}>{tour.title}</Text>
-      <Text style={styles.desc}>{tour.description}</Text>
-      <Text style={styles.tagHead}>Страны</Text>
-      <View style={styles.tags}>
-        {tour.countries.map(c => (
-          <View key={c} style={[styles.tag, styles.tagBlue]}>
-            <Text style={styles.tagBlueT}>{c}</Text>
-          </View>
-        ))}
-      </View>
-      <Text style={styles.tagHead}>Города</Text>
-      <View style={styles.tags}>
-        {tour.cities.map(c => (
-          <View key={c} style={[styles.tag, styles.tagGreen]}>
-            <Text style={styles.tagGreenT}>{c}</Text>
-          </View>
-        ))}
-      </View>
-      <Text style={styles.tagHead}>Достопримечательности</Text>
-      <View style={styles.tags}>
-        {tour.sights.map(c => (
-          <View key={c} style={[styles.tag, styles.tagPurple]}>
-            <Text style={styles.tagPurpleT}>{c}</Text>
-          </View>
-        ))}
-      </View>
-      <Text style={styles.price}>
-        {tour.price.toLocaleString('ru-RU')}₽
+      <Text style={styles.route}>
+        {flight.routeFrom} → {flight.routeTo}
       </Text>
+      <View style={styles.metaRow}>
+        <Text style={styles.meta}>📅 {flight.dateLabel}</Text>
+        <Text style={styles.meta}>🕐 {flight.timeLabel}</Text>
+      </View>
+      <View style={styles.catRow}>
+        {flight.categories.map(c => {
+          const unlocked = isCategoryUnlocked(c);
+          const active = c.id === selectedCategoryId;
+          return (
+            <Pressable
+              key={c.id}
+              onPress={() => unlocked && onSelectCategory(c.id)}
+              style={[
+                styles.chip,
+                active && styles.chipActive,
+                !unlocked && styles.chipDisabled,
+              ]}>
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                {c.name} {!unlocked ? '🔒' : ''}
+              </Text>
+              <Text
+                style={[
+                  styles.chipPrice,
+                  active && styles.chipPriceActive,
+                  !unlocked && styles.chipPriceDisabled,
+                ]}>
+                {c.price.toLocaleString('ru-RU')}₽
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <View style={styles.actions}>
         <PrimaryButton
-          title={unlocked ? 'Забронировать' : 'Заблокировано 🔒'}
-          onPress={() => {
-            if (!unlocked) {
-              Alert.alert(
-                'Тур закрыт',
-                'Купите ачивку в профиле, чтобы открыть это направление.',
-              );
-              return;
-            }
-            onBook();
-          }}
-          style={{ flex: 1, opacity: unlocked ? 1 : 0.55 }}
+          title="Забронировать"
+          onPress={onBook}
+          style={{ flex: 1 }}
         />
         <Pressable style={styles.giftBtn} onPress={onGift}>
           <Text style={styles.giftEmoji}>🎁</Text>
@@ -282,49 +284,46 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 18,
-    padding: 14,
+    padding: 16,
     marginBottom: 14,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  gallery: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  gph: {
-    width: 72,
-    height: 72,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gemoji: { fontSize: 32 },
-  gimg: { width: 72, height: 72, borderRadius: 14, backgroundColor: colors.surface },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between' },
-  company: { color: colors.textSecondary, fontWeight: '600' },
-  star: { color: colors.star, fontWeight: '700' },
-  ttitle: { fontSize: 18, fontWeight: '800', color: colors.text, marginTop: 8 },
-  desc: { color: colors.textSecondary, marginTop: 6, lineHeight: 20 },
-  tagHead: {
-    marginTop: 10,
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
-  tag: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
-  tagBlue: { backgroundColor: colors.tagBlue },
-  tagBlueT: { color: colors.tagBlueText, fontWeight: '700', fontSize: 13 },
-  tagGreen: { backgroundColor: colors.tagGreen },
-  tagGreenT: { color: colors.tagGreenText, fontWeight: '700', fontSize: 13 },
-  tagPurple: { backgroundColor: colors.tagPurple },
-  tagPurpleT: { color: colors.tagPurpleText, fontWeight: '700', fontSize: 13 },
+  airline: { fontSize: 17, fontWeight: '800', color: colors.text, flex: 1 },
   price: {
-    marginTop: 14,
-    fontSize: 22,
-    fontWeight: '900',
+    fontSize: 17,
+    fontWeight: '800',
     color: colors.primary,
+    marginLeft: 12,
   },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
+  route: { marginTop: 6, color: colors.textSecondary, fontWeight: '600' },
+  metaRow: { flexDirection: 'row', gap: 16, marginTop: 10 },
+  meta: { color: colors.textSecondary, fontSize: 14 },
+  catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: colors.surface,
+    minWidth: '30%',
+    flexGrow: 1,
+  },
+  chipActive: { borderColor: colors.primary, backgroundColor: '#FFF3E8' },
+  chipDisabled: { opacity: 0.45 },
+  chipText: { fontSize: 13, fontWeight: '700', color: colors.text },
+  chipTextActive: { color: colors.primary },
+  chipPrice: { fontSize: 12, color: colors.textSecondary, marginTop: 4, fontWeight: '600' },
+  chipPriceActive: { color: colors.primary },
+  chipPriceDisabled: { color: colors.textMuted },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 16, alignItems: 'center' },
   giftBtn: {
     width: 52,
     height: 52,

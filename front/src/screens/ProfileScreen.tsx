@@ -1,134 +1,242 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useAuth } from '../context/AuthContext';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { PointsBanner } from '../components/PointsBanner';
+import { useApp } from '../context/AppContext';
+import type { ProfileStackParamList } from '../navigation/types';
+import { colors } from '../theme/colors';
 
-const ACCENT = '#0A5C8A';
+type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileHome'>;
 
-const ROLE_LABELS: Record<string, string> = {
-  user: '👤 Турист',
-  tour_agent: '🗺 Турагент',
-  admin: '🔑 Администратор',
-};
+export function ProfileScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  const { user, points, logout, earnedBadges, setAvatar, accountType } =
+    useApp();
 
-const ROLE_COLORS: Record<string, string> = {
-  user: '#2E7D32',
-  tour_agent: '#1565C0',
-  admin: '#6A1B9A',
-};
+  const pickAvatar = async () => {
+    const res = await launchImageLibrary({ mediaType: 'photo' });
+    const uri = res.assets?.[0]?.uri;
+    if (uri) setAvatar(uri);
+  };
 
-export default function ProfileScreen() {
-  const { username, role, userId, signOut } = useAuth();
+  const initial = (user?.name?.[0] ?? '?').toUpperCase();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.avatarBox}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{username ? username[0].toUpperCase() : '?'}</Text>
-        </View>
-        <Text style={styles.username}>{username}</Text>
-        <View style={[styles.roleBadge, { backgroundColor: ROLE_COLORS[role ?? 'user'] + '18' }]}>
-          <Text style={[styles.roleText, { color: ROLE_COLORS[role ?? 'user'] }]}>
-            {ROLE_LABELS[role ?? 'user'] ?? role}
-          </Text>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={{
+        paddingTop: insets.top + 12,
+        paddingHorizontal: 20,
+        paddingBottom: insets.bottom + 120,
+      }}>
+      <Text style={styles.title}>Профиль</Text>
+      <Text style={styles.sub}>Ваши данные и достижения</Text>
+
+      <View style={styles.card}>
+        <Pressable onPress={pickAvatar} style={styles.avatarWrap}>
+          {user?.avatarUri ? (
+            <Image source={{ uri: user.avatarUri }} style={styles.avatarImg} />
+          ) : (
+            <View style={styles.avatarFallback}>
+              <Text style={styles.avatarLetter}>{initial}</Text>
+            </View>
+          )}
+        </Pressable>
+        <View style={styles.userMeta}>
+          <Text style={styles.name}>{user?.name ?? 'Гость'}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
+          {accountType === 'business' && user?.companyName ? (
+            <Text style={styles.company}>{user.companyName}</Text>
+          ) : null}
         </View>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Информация об аккаунте</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>ID</Text>
-          <Text style={styles.infoValue}>#{userId}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Имя пользователя</Text>
-          <Text style={styles.infoValue}>{username}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Роль</Text>
-          <Text style={styles.infoValue}>{ROLE_LABELS[role ?? ''] ?? role}</Text>
-        </View>
+      <PointsBanner points={points} />
+
+      <View style={styles.sectionHead}>
+        <Text style={styles.sectionTitle}>Мини-игры</Text>
+        <Text style={styles.trend}>📈</Text>
+      </View>
+      <View style={styles.grid}>
+        <GameTile
+          emoji="🌱"
+          title="Потрогай траву"
+          sub="+20 баллов"
+          subColor={colors.success}
+          onPress={() => navigation.navigate('TouchGrass')}
+        />
+        <GameTile
+          emoji="🎰"
+          title="Казино"
+          sub="До 100 баллов"
+          subColor={colors.primary}
+          onPress={() => navigation.navigate('Casino')}
+        />
+        <GameTile
+          emoji="📱"
+          title="Потряси"
+          sub="100 раз"
+          subColor={colors.businessBlue}
+          onPress={() => navigation.navigate('Shake')}
+        />
+        <GameTile
+          emoji="🏃"
+          title="Шагомер"
+          sub="150 шагов / мин"
+          subColor={colors.tagPurpleText}
+          onPress={() => navigation.navigate('Steps')}
+        />
       </View>
 
-      {role === 'tour_agent' && (
-        <View style={styles.infoBox}>
-          <Text style={styles.infoBoxText}>
-            🗺 Как турагент вы можете добавлять, редактировать и удалять свои туры на вкладке «Туры».
-          </Text>
-        </View>
+      <Pressable
+        style={styles.storeRow}
+        onPress={() => navigation.navigate('Achievements')}>
+        <Text style={styles.storeTitle}>Ачивки</Text>
+        <Text style={styles.storeIcon}>🏅</Text>
+      </Pressable>
+
+      <Text style={styles.badgeSection}>Полученные ачивки</Text>
+      {earnedBadges.length === 0 ? (
+        <Text style={styles.muted}>Пока пусто — совершайте подвиги.</Text>
+      ) : (
+        earnedBadges.map(b => (
+          <View key={b.id} style={styles.badgeCard}>
+            <Text style={styles.badgeTitle}>{b.title}</Text>
+            <Text style={styles.badgeDesc}>{b.description}</Text>
+          </View>
+        ))
       )}
 
-      {role === 'admin' && (
-        <View style={[styles.infoBox, { backgroundColor: '#F3E5F5' }]}>
-          <Text style={[styles.infoBoxText, { color: '#6A1B9A' }]}>
-            🔑 Вы — администратор. У вас полный доступ ко всем турам и управлению ролями через API.
-          </Text>
-        </View>
-      )}
+      <Text style={styles.badgeSection}>Не полученные</Text>
+      <Text style={styles.muted}>
+        Расширим список, когда появится бэкенд и события.
+      </Text>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={signOut}>
-        <Text style={styles.logoutText}>Выйти из аккаунта</Text>
-      </TouchableOpacity>
+      <Pressable
+        style={styles.logout}
+        onPress={() => {
+          logout();
+        }}>
+        <Text style={styles.logoutText}>Выйти</Text>
+      </Pressable>
     </ScrollView>
   );
 }
 
+function GameTile({
+  emoji,
+  title,
+  sub,
+  subColor,
+  onPress,
+}: {
+  emoji: string;
+  title: string;
+  sub: string;
+  subColor: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={styles.tile}>
+      <Text style={styles.tileEmoji}>{emoji}</Text>
+      <Text style={styles.tileTitle}>{title}</Text>
+      <Text style={[styles.tileSub, { color: subColor }]}>{sub}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F4F8' },
-  content: { padding: 20 },
-  avatarBox: { alignItems: 'center', paddingVertical: 32 },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: ACCENT,
-    justifyContent: 'center',
+  root: { flex: 1, backgroundColor: colors.background },
+  title: { fontSize: 28, fontWeight: '900', color: colors.text },
+  sub: { fontSize: 15, color: colors.textSecondary, marginTop: 6 },
+  card: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 20,
+    gap: 14,
+  },
+  avatarWrap: { borderRadius: 999, overflow: 'hidden' },
+  avatarImg: { width: 72, height: 72, borderRadius: 999 },
+  avatarFallback: {
+    width: 72,
+    height: 72,
+    borderRadius: 999,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarLetter: { color: '#fff', fontSize: 32, fontWeight: '800' },
+  userMeta: { flex: 1 },
+  name: { fontSize: 20, fontWeight: '800', color: colors.text },
+  email: { color: colors.textSecondary, marginTop: 4 },
+  company: { color: colors.businessBlue, marginTop: 4, fontWeight: '700' },
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 28,
     marginBottom: 12,
   },
-  avatarText: { fontSize: 32, fontWeight: '800', color: '#fff' },
-  username: { fontSize: 22, fontWeight: '800', color: '#1A2332', marginBottom: 8 },
-  roleBadge: {
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-  },
-  roleText: { fontSize: 13, fontWeight: '700' },
-  section: {
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: colors.text },
+  trend: { fontSize: 18 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  tile: {
+    width: '47%',
     backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#888', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
-  infoRow: {
+  tileEmoji: { fontSize: 28, marginBottom: 8 },
+  tileTitle: { fontSize: 15, fontWeight: '800', color: colors.text },
+  tileSub: { marginTop: 6, fontWeight: '700', fontSize: 13 },
+  storeRow: {
+    marginTop: 28,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F4F8',
-  },
-  infoLabel: { fontSize: 14, color: '#888' },
-  infoValue: { fontSize: 14, fontWeight: '600', color: '#1A2332' },
-  infoBox: {
-    backgroundColor: '#E8F4FD',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
-  infoBoxText: { fontSize: 13, color: '#0A5C8A', lineHeight: 20 },
-  logoutBtn: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E53935',
-    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  logoutText: { color: '#E53935', fontWeight: '700', fontSize: 15 },
+  storeTitle: { fontSize: 18, fontWeight: '800' },
+  storeIcon: { fontSize: 22 },
+  badgeSection: {
+    marginTop: 24,
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  muted: { color: colors.textSecondary, marginTop: 8, lineHeight: 20 },
+  badgeCard: {
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  badgeTitle: { fontWeight: '800', color: colors.text },
+  badgeDesc: { color: colors.textSecondary, marginTop: 4, lineHeight: 18 },
+  logout: {
+    marginTop: 28,
+    backgroundColor: colors.dangerBg,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  logoutText: { color: colors.danger, fontWeight: '800', fontSize: 16 },
 });

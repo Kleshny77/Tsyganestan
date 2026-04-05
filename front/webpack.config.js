@@ -11,6 +11,10 @@ module.exports = {
   resolve: {
     alias: {
       'react-native$': 'react-native-web',
+      'react-native-sensors': path.join(
+        __dirname,
+        'src/shims/react-native-sensors.web.js',
+      ),
     },
     extensions: ['.web.js', '.web.ts', '.web.tsx', '.js', '.ts', '.tsx'],
   },
