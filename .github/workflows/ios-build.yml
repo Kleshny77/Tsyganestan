@@ -1,0 +1,97 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: front/yarn.lock
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: front/ios
+
+      - name: Install dependencies
+        working-directory: front
+        run: yarn install --frozen-lockfile
+
+      - name: Install CocoaPods dependencies
+        working-directory: front/ios
+        run: pod install
+
+      - name: Build iOS App (Simulator)
+        working-directory: front/ios
+        run: |
+          xcodebuild \
+            -workspace Front.xcworkspace \
+            -scheme Front \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            clean build \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Create IPA (Ad Hoc)
+        working-directory: front/ios
+        run: |
+          xcodebuild \
+            -workspace Front.xcworkspace \
+            -scheme Front \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath $PWD/build/Front.xcarchive \
+            clean archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export IPA
+        working-directory: front/ios
+        run: |
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/Front.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates 2>/dev/null || \
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/Front.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ExportOptions.plist 2>/dev/null || \
+          echo "IPA export requires provisioning profile"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-app
+          path: front/ios/build/ipa/*.ipa
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload App artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app-build
+          path: front/ios/build/Front.xcarchive
+          retention-days: 30
