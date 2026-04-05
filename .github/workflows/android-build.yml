@@ -13,22 +13,24 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'yarn'
-          cache-dependency-path: front/yarn.lock
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
 
       - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install front dependencies
         working-directory: front
         run: yarn install --frozen-lockfile
 

@@ -13,23 +13,25 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'yarn'
-          cache-dependency-path: front/yarn.lock
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@v2
         with:
           ruby-version: '3.2'
           bundler-cache: true
           working-directory: front/ios
 
       - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install front dependencies
         working-directory: front
         run: yarn install --frozen-lockfile
 
