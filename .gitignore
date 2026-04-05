@@ -130,6 +130,12 @@ Thumbs.db
 # History
 .history/
 
+# Android
+**/debug.keystore
+*.jks
+*.keystore
+!front/android/app/debug.keystore
+
 # Local development
 *.local.*
 

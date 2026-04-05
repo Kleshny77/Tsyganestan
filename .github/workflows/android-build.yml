@@ -38,6 +38,7 @@ jobs:
         working-directory: front/android
         run: |
           mkdir -p app
+          if [ -f app/debug.keystore ]; then rm app/debug.keystore; fi
           keytool -genkey -v -keystore app/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Build Android Debug APK
