@@ -1,3 +1,6 @@
+import { dispatchMockApi } from './mockApiHandlers';
+import { isApiMocked } from './mockMode';
+
 /** Подставляется при web-сборке (webpack DefinePlugin), иначе дефолт. */
 const RAILWAY_API =
   process.env.PUBLIC_API_URL || 'https://tsyganestan-production.up.railway.app';
@@ -29,6 +32,12 @@ export async function apiRequest<T>(
   options: RequestInit = {},
   token?: string | null,
 ): Promise<T> {
+  if (isApiMocked()) {
+    const mock = dispatchMockApi<T>(path, options, token);
+    if (!mock.ok) throw new ApiError(mock.status, mock.message);
+    return mock.data;
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
