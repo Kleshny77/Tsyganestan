@@ -100,7 +100,7 @@ export function GiftScreen({ navigation, route }: Props) {
             } satisfies GyroBookingParams)
           }>
           <Text style={styles.linkText}>
-            Или сначала пройти «гироскоп-бронь» для мистери-бокса →
+            Или сначала пройти финальное действие для мистери-бокса →
           </Text>
         </Pressable>
       ) : null}

@@ -217,7 +217,7 @@ export function GyroBookingScreen({ navigation, route }: Props) {
               style={[
                 styles.btn,
                 {
-                  left: pos.x - 12,
+                  left: pos.x,
                   top: pos.y - areaTop,
                   width: BUTTON_W,
                   height: BUTTON_H,
