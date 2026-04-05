@@ -98,9 +98,9 @@ export function ProfileScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('Casino')}
         />
         <GameTile
-          emoji="📱"
-          title="Потряси"
-          sub="100 раз"
+          emoji="🪟"
+          title="Иллюминатор"
+          sub="100 тапов / трясок"
           subColor={colors.businessBlue}
           onPress={() => navigation.navigate('Shake')}
         />
