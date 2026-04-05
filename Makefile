@@ -1,1 +1,2 @@
-run-local: docker-compose up --build
+run-local:
+	docker-compose up --build

@@ -47,5 +47,12 @@ module.exports = {
     },
     hot: true,
     port: 8081,
+    proxy: [
+      {
+        context: ['/auth', '/tours', '/users'],
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    ],
   },
 };
