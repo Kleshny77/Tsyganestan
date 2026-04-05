@@ -1,9 +1,10 @@
 import React from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BackRow } from '../components/BackRow';
 import { useApp } from '../context/AppContext';
+import { userAlert } from '../lib/userAlert';
 import { STORE_ITEMS } from '../data/mockCatalog';
 import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
@@ -43,9 +44,9 @@ export function AchievementsScreen({ navigation }: Props) {
                 onPress={() => {
                   const r = buyAchievement(item.id);
                   if (r.ok) {
-                    Alert.alert('Куплено', `${item.title} теперь ваше.`);
+                    userAlert('Куплено', `${item.title} теперь ваше.`);
                   } else {
-                    Alert.alert('Не вышло', r.message ?? '');
+                    userAlert('Не вышло', r.message ?? '');
                   }
                 }}
                 style={[styles.buyWrap, owned && styles.buyDisabled]}>

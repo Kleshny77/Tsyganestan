@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -10,6 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ApiError } from '../api/client';
+import { userAlert } from '../lib/userAlert';
 import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -28,7 +28,7 @@ export function LoginScreen({ navigation }: Props) {
 
   const onSubmit = async () => {
     if (!email.trim() || !password) {
-      Alert.alert('Проверьте данные', 'Введите email и пароль.');
+      userAlert('Проверьте данные', 'Введите email и пароль.');
       return;
     }
     setBusy(true);
@@ -37,7 +37,7 @@ export function LoginScreen({ navigation }: Props) {
     } catch (e) {
       const msg =
         e instanceof ApiError ? e.message : 'Не удалось войти. Проверьте сеть.';
-      Alert.alert('Ошибка входа', String(msg));
+      userAlert('Ошибка входа', String(msg));
     } finally {
       setBusy(false);
     }

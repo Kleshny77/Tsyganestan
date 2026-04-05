@@ -1,12 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +8,7 @@ import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { userAlert } from '../lib/userAlert';
 import { colors } from '../theme/colors';
 
 type GiftParams = { kind: 'flight' | 'tour' };
@@ -40,20 +34,20 @@ export function GiftScreen({ navigation, route }: Props) {
 
   const onSend = () => {
     if (!email.trim()) {
-      Alert.alert('Нужен email', 'Укажите почту друга — мы «найдём» его аккаунт.');
+      userAlert('Нужен email', 'Укажите почту друга — мы «найдём» его аккаунт.');
       return;
     }
     if (kind === 'flight' && mystery) {
       const pick = flights[Math.floor(Math.random() * flights.length)];
       const cat = pick?.categories[0];
-      Alert.alert(
+      userAlert(
         'Мистери-бокс отправлен',
         `Друг получит сюрприз: ${pick?.airlineName ?? '???'} · ${cat?.name ?? 'билет'}.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }],
       );
       return;
     }
-    Alert.alert(
+    userAlert(
       'Подарок в пути',
       'Когда подключим бэкенд, подарок уйдёт в личный кабинет друга.',
       [{ text: 'OK', onPress: () => navigation.goBack() }],

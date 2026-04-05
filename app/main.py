@@ -17,6 +17,8 @@ _default_origins = [
     "http://127.0.0.1:3000",
     "http://localhost:3010",
     "http://127.0.0.1:3010",
+    # GitHub Pages (Origin без пути к репо); дублируем regex на случай старых деплоев
+    "https://kleshny77.github.io",
 ]
 _extra_origins = [
     x.strip()

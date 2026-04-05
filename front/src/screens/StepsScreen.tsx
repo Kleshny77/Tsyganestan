@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
@@ -10,6 +10,7 @@ import {
 import { BackRow } from '../components/BackRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { userAlert } from '../lib/userAlert';
 import type { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 
@@ -64,7 +65,7 @@ export function StepsScreen({ navigation }: Props) {
                 title: 'Минутный спринт',
                 description: '150 «шагов» за минуту по акселерометру.',
               });
-              Alert.alert('Готово', '+40 баллов. Вы невероятны.', [
+              userAlert('Готово', '+40 баллов. Вы невероятны.', [
                 { text: 'OK', onPress: () => navigation.goBack() },
               ]);
             }

@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ApiError } from '../api/client';
+import { userAlert } from '../lib/userAlert';
 import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -31,7 +26,7 @@ export function RegisterFormScreen({ navigation, route }: Props) {
   const onSubmit = async () => {
     const em = email.trim();
     if (!em || !password) {
-      Alert.alert('Проверьте данные', 'Нужны email и пароль.');
+      userAlert('Проверьте данные', 'Нужны email и пароль.');
       return;
     }
     setBusy(true);
@@ -61,7 +56,7 @@ export function RegisterFormScreen({ navigation, route }: Props) {
         e instanceof ApiError
           ? e.message
           : 'Не удалось зарегистрироваться. Попробуйте другой email.';
-      Alert.alert('Ошибка', String(msg));
+      userAlert('Ошибка', String(msg));
     } finally {
       setBusy(false);
     }

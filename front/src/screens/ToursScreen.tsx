@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -13,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { userAlert } from '../lib/userAlert';
 import type { ToursStackParamList } from '../navigation/types';
 import type { Tour } from '../types';
 import { colors } from '../theme/colors';
@@ -220,7 +220,7 @@ function TourCard({
           title={unlocked ? 'Забронировать' : 'Заблокировано 🔒'}
           onPress={() => {
             if (!unlocked) {
-              Alert.alert(
+              userAlert(
                 'Тур закрыт',
                 'Купите ачивку в профиле, чтобы открыть это направление.',
               );

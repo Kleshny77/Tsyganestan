@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -17,6 +9,7 @@ import { BackRow } from '../components/BackRow';
 import { LabeledField } from '../components/LabeledField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { useApp } from '../context/AppContext';
+import { userAlert } from '../lib/userAlert';
 import type { ToursStackParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 
@@ -76,7 +69,7 @@ export function AddTourScreen({ navigation }: Props) {
           e instanceof ApiError
             ? e.message
             : 'Проверьте роль турагента и подключение к сети.';
-        Alert.alert('Не сохранилось', String(msg));
+        userAlert('Не сохранилось', String(msg));
       } finally {
         setSaving(false);
       }
